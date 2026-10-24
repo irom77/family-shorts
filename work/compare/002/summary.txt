@@ -1,0 +1,9 @@
+P: /mnt/c/Users/irekr/Videos/Archive/99199_Romaniuk PAL DV Files/002_15,08,1993_Chrzest_Oli.avi
+   width=720 height=480 pix_fmt=yuv411p r_frame_rate=30000/1001 duration=3788.851733 size=13663693312 
+N: /mnt/c/Users/irekr/Videos/Archive/99199_Romaniuk NTSC DV Files/002_15,08,1993_Chrzest_Oli_NTSC.avi
+   width=720 height=480 pix_fmt=yuv411p r_frame_rate=30000/1001 duration=3788.851733 size=14357709796 
+frames: P=113552 N=113552 compared=113552 -> MATCH
+audio:  3788 of 3789 one-second chunks identical (P 3789 s, N 3789 s)
+video:  identical frames=0, differing=113552, PSNR avg=50.3 dB min=35.1 dB
+        frames below 35 dB: 0
+blur (lower = sharper): P=['6.677', '6.568', '6.350'] N=['6.706', '6.582', '6.380'] -> P sharper

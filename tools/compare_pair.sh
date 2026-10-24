@@ -1,0 +1,1 @@
+../.claude/skills/family-shorts/scripts/compare_pair.sh

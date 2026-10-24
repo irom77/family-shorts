@@ -1,0 +1,9 @@
+P: /mnt/c/Users/irekr/Videos/Archive/99199_Romaniuk PAL DV Files/006_Maj_1997_Canada_I_7.avi
+   width=720 height=576 pix_fmt=yuv420p r_frame_rate=25/1 duration=5425.120000 size=19583770624 
+N: /mnt/c/Users/irekr/Videos/Archive/99199_Romaniuk NTSC DV Files/006_Maj_1997_Canada_I_7_NTSC.avi
+   width=720 height=480 pix_fmt=yuv411p r_frame_rate=30000/1001 duration=5425.319900 size=20558865312 
+frames: P=135628 N=162597 compared=0 -> DIFFERENT
+audio:  DIFFERENT (MD5=46a07913cadf… / MD5=e12e64fe15af…)
+video:  all 0 frames bit-identical
+        frames below 35 dB: 0
+blur (lower = sharper): P=['5.695', '4.863', '5.587'] N=['6.011', '5.128', '6.143'] -> P sharper

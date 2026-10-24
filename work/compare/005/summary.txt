@@ -1,0 +1,9 @@
+P: /mnt/c/Users/irekr/Videos/Archive/99199_Romaniuk PAL DV Files/005_Plesna_96_Lipiec_0001.avi
+   width=720 height=576 pix_fmt=yuv420p r_frame_rate=25/1 duration=3329.240000 size=12018059264 
+N: /mnt/c/Users/irekr/Videos/Archive/99199_Romaniuk NTSC DV Files/005_Plesna_96_Lipiec_0001_NTSC.avi
+   width=720 height=480 pix_fmt=yuv411p r_frame_rate=30000/1001 duration=3329.359367 size=12616490624 
+frames: P=83231 N=99781 compared=0 -> DIFFERENT
+audio:  DIFFERENT (MD5=64e4fdea8114… / MD5=f08ac38f87f9…)
+video:  all 0 frames bit-identical
+        frames below 35 dB: 0
+blur (lower = sharper): P=['4.858', '5.042', '5.096'] N=['5.183', '5.179', '5.517'] -> P sharper
