@@ -196,7 +196,7 @@ def main(WORK, num):
         {"id": "title-pl", "type": "string", "label": "Title (PL)", "default": t["pl"]},
         {"id": "date-pl", "type": "string", "label": "Date (PL)", "default": t["date"]},
         {"id": "title-en", "type": "string", "label": "Title (EN)", "default": t["en"]},
-    ], ensure_ascii=False)
+    ], ensure_ascii=False).replace("'", "&#39;")  # the attribute is single-quoted
     head = (TEMPLATE / "index_head.html").read_text().replace("__VARIABLES__", variables)
     (proj / "index.html").write_text(f"""{head}<body>
     <div
