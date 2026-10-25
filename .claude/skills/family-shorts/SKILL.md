@@ -22,7 +22,7 @@ upload are scripts in `scripts/`; `<skill>` below means this skill's folder
 - **No reuse:** a scene goes into at most one short. The ledger is `plan/shortNN.tsv`, and earlier
   shorts' TSVs are the record of what's taken.
 - **Review before upload:** show the user the storyboard (shot list plus captions) before enhancing.
-  Upload only after the user says so explicitly, with the privacy they name (default `private`).
+  Upload only after the user says so explicitly, with the privacy they name; when they name none, use `unlisted` (the user's default since 2026-10-25: watchable by anyone with the link, not listed in search or on the channel). Playlists are unlisted too, since a public playlist would expose the unlisted videos in it.
   Don't upload anything sensitive, such as undressed children (short 08 of tape 001 was kept off
   YouTube for this reason).
 - **Snapshots:** always `--describe false`. Without it, frames go to Gemini.
@@ -160,13 +160,20 @@ Check each MP4:
 Upload only when the user asks.
 
 ```bash
-nohup setsid <skill>/scripts/upload.sh work/<tape> public 09 10 > work/<tape>/plan/upload.log 2>&1 < /dev/null &
+nohup setsid <skill>/scripts/upload.sh work/<tape> unlisted 09 10 > work/<tape>/plan/upload.log 2>&1 < /dev/null &
 ```
 
-- **Quota:** 6 uploads per day at most (1600 of 10,000 quota units each).
+- **Quota:** videos.insert has its own bucket of 100 calls per day per Cloud project, separate from the 10,000-unit pool for other calls (the pool still pays for the `privacy` updates).
+- **Channel cap:** separately from quota, YouTube refuses with `uploadLimitExceeded` after about
+  10 uploads per rolling 24 h on @irom77 (hit on 2026-10-25). Count the `uploaded_at` times in all
+  manifests before a batch; upload the rest once the oldest upload in the window is 24 h old.
 - **What it writes:** the uploader records each video's id, URL and channel in the manifest.
 - **Check:** `curl -s -o /dev/null -w '%{http_code}' "https://www.youtube.com/oembed?url=<url>"`
-  should give 200 for public videos.
+  should give 200 for public and unlisted videos.
+- **Playlist per tape:** after the uploads finish (not while they run — both write the manifest),
+  `yt_family.py playlist --manifest … --title "…" --description "…" --expect-channel UCBoriY5wyxsxBh09ctbyvnw`
+  creates the playlist once, records it in the manifest and adds any uploaded short not yet in it,
+  in manifest order. Rerun it after later uploads. No names of people or places in the title.
 - **Change privacy later:** `yt_family.py privacy --manifest … --short short_NN --privacy unlisted --expect-channel UCBoriY5wyxsxBh09ctbyvnw`.
 - **Sign-in:** the OAuth app is in testing mode, so the token lasts about 7 days. On an auth error the
   user re-signs in with:

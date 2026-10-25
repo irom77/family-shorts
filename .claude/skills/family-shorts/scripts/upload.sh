@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Upload shorts listed in the tape's manifest.json to @irom77. Only after the user said so.
 # usage: upload.sh <tape-dir> <private|unlisted|public> NN [NN...]   log: <tape-dir>/plan/upload.log
-# Each upload costs 1600 of 10,000 daily quota units: at most 6 per day.
+# videos.insert has its own quota bucket: 100 uploads per day per Cloud project.
 HERE="$(cd "$(dirname "$0")" && pwd)"
 . "$HERE/tape.sh" "$1"; PRIV="$2"; shift 2
 cd /tmp   # uv must not pick up a project from the tape folder

@@ -7,10 +7,12 @@ so the FPV channel and the family channel can never be mixed up.
   yt_family.py auth  [--client client_secret.json | --from-token other_token.json]
   yt_family.py channel
   yt_family.py upload --manifest manifest.json --short short_01 --privacy private --expect-channel @irom77
+  yt_family.py playlist --manifest manifest.json --title "…" --privacy unlisted --expect-channel @irom77
 """
 import argparse
 import json
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -120,10 +122,59 @@ def cmd_privacy(a):
     st["privacyStatus"] = a.privacy
     st.pop("publishAt", None)
     yt.videos().update(part="status", body={"id": vid, "status": st}).execute()
-    now = yt.videos().list(part="status", id=vid).execute()["items"][0]["status"]["privacyStatus"]
+    now = retry(lambda: yt.videos().list(part="status", id=vid).execute()["items"][0]["status"]["privacyStatus"],
+                ok=lambda p: p == a.privacy)
     print("VIDEO", vid, s["youtube"]["url"], now)
     s["youtube"]["privacy"] = now
     mpath.write_text(json.dumps(man, ensure_ascii=False, indent=2) + "\n")
+
+
+def retry(call, ok=lambda r: True, tries=6, wait=5):
+    """YouTube reads lag behind writes: retry a read until ok(result), or until it stops raising."""
+    for i in range(tries):
+        try:
+            r = call()
+            if ok(r) or i == tries - 1:
+                return r
+        except Exception:
+            if i == tries - 1:
+                raise
+        time.sleep(wait)
+
+
+def cmd_playlist(a):
+    mpath = Path(a.manifest)
+    man = json.loads(mpath.read_text())
+    vids = [s["youtube"]["id"] for s in man["shorts"] if s.get("youtube")]
+    if not vids:
+        sys.exit(f"no uploads recorded in {mpath}")
+    yt = youtube()
+    chans = channels(yt)
+    want = a.expect_channel.lower().lstrip("@")
+    if not any(want in (c["id"].lower(), c["title"].lower(), c["handle"].lower().lstrip("@")) for c in chans):
+        sys.exit(f"token is for {chans}, not {a.expect_channel!r}: nothing changed")
+    pl = man.get("playlist")
+    if not pl:
+        resp = yt.playlists().insert(part="snippet,status", body={
+            "snippet": {"title": a.title, "description": a.description, "defaultLanguage": "pl"},
+            "status": {"privacyStatus": a.privacy}}).execute()
+        pl = man["playlist"] = {"id": resp["id"], "url": f"https://www.youtube.com/playlist?list={resp['id']}",
+                                "title": a.title, "privacy": a.privacy}
+        mpath.write_text(json.dumps(man, ensure_ascii=False, indent=2) + "\n")
+    have, page = set(), None
+    while True:
+        # A just-created playlist can 404 for a few seconds.
+        r = retry(lambda: yt.playlistItems().list(part="contentDetails", playlistId=pl["id"],
+                                                  maxResults=50, pageToken=page).execute())
+        have |= {i["contentDetails"]["videoId"] for i in r.get("items", [])}
+        page = r.get("nextPageToken")
+        if not page:
+            break
+    for v in vids:  # manifest order = short order
+        if v not in have:
+            yt.playlistItems().insert(part="snippet", body={"snippet": {
+                "playlistId": pl["id"], "resourceId": {"kind": "youtube#video", "videoId": v}}}).execute()
+    print("PLAYLIST", pl["id"], pl["url"], f"{len(vids)} videos")
 
 
 def main():
@@ -146,8 +197,15 @@ def main():
     p.add_argument("--short", required=True)
     p.add_argument("--privacy", required=True, choices=["private", "unlisted", "public"])
     p.add_argument("--expect-channel", required=True)
+    p = sub.add_parser("playlist", help="create the tape's playlist (once) and add every uploaded short")
+    p.add_argument("--manifest", required=True)
+    p.add_argument("--title", required=True)
+    p.add_argument("--description", default="")
+    p.add_argument("--privacy", default="unlisted", choices=["private", "unlisted", "public"])
+    p.add_argument("--expect-channel", required=True)
     a = ap.parse_args()
-    {"auth": cmd_auth, "channel": cmd_channel, "upload": cmd_upload, "privacy": cmd_privacy}[a.cmd](a)
+    {"auth": cmd_auth, "channel": cmd_channel, "upload": cmd_upload, "privacy": cmd_privacy,
+     "playlist": cmd_playlist}[a.cmd](a)
 
 
 if __name__ == "__main__":

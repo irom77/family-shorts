@@ -15,7 +15,7 @@ Claude picks the matching skill.
 
 | Skill | What it does | Say something like |
 |---|---|---|
-| [`family-shorts`](.claude/skills/family-shorts/SKILL.md) | One DV tape → restored 9:16 YouTube Shorts with Polish/English captions, rendered with HyperFrames and uploaded to @irom77 | "make shorts from tape 002", "upload shorts 09–11 as public", "make short 05 unlisted" |
+| [`family-shorts`](.claude/skills/family-shorts/SKILL.md) | One DV tape → restored 9:16 YouTube Shorts with Polish/English captions, rendered with HyperFrames and uploaded to @irom77 | "make shorts from tape 002", "upload shorts 09–11", "make short 05 unlisted" |
 
 ### family-shorts
 
@@ -37,12 +37,12 @@ Claude picks the matching skill.
 4. **Make:** Claude enhances the shots, builds and checks the HyperFrames projects, and renders them.
    The MP4s and a `manifest.json` appear in the tape's Shorts folder.
 5. **Review:** watch them there.
-6. **Upload:** say *"upload shorts 09–11 as public"* (or private or unlisted). Nothing is uploaded
+6. **Upload:** say *"upload shorts 09–11"* (unlisted unless you name private or public). Nothing is uploaded
    without this. You get the links back.
 
 **Limits worth knowing.**
 
-- **Uploads:** YouTube allows about **6 uploads per day** on this project's API quota.
+- **Uploads:** YouTube allows **100 uploads per day** on this project (videos.insert has its own quota bucket).
 - **YouTube sign-in:** it expires after about **7 days**, because the Google app is in testing mode.
   When it does, Claude asks you to run the sign-in command; it opens a browser.
 - **Pace:** enhancement and rendering are CPU-heavy and memory-limited in WSL. Expect 1–2 hours of
@@ -70,7 +70,7 @@ first and reads its `plan/tape.json`):
 `tools/yt_family.py` and `tools/compare_pair.sh` are links to the skill's copies. `work/001/scripts/`
 holds the original tape-001 versions and is kept for reference only.
 
-**Status.** Tape 001 is done: shorts 01–07 are public, and 08 is kept private, offline. Links are in
+**Status.** All uploads are unlisted (changed 2026-10-25). Tape 001: shorts 01–07 uploaded, 08 kept offline. Tape 002: shorts 01–06 uploaded. Tape 005: shorts 01–04 uploaded and in a playlist; 05 waits for the channel upload cap. Links are in
 `C:\Users\irekr\Videos\Archive\Shorts\001_1996-05-03\manifest.json`.
 
 ## Adding a skill
