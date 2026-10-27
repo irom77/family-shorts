@@ -1,12 +1,5 @@
-# Media and generated files stay local: only code, docs and the small plan files are tracked.
-work/**
-!work/*/
-!work/*/plan/
-!work/*/plan/*.tsv
-!work/*/plan/copy.json
-!work/*/plan/tape.json
-!work/compare/*/
-!work/compare/*/summary.txt
+# Working files (media, renders and plans) stay local.
+work/
 __pycache__/
 .vscode/
 node_modules/

@@ -1,4 +1,0 @@
-P: /mnt/c/Users/irekr/Videos/Archive/99199_Romaniuk PAL DV Files/008_Canada_III_9.avi
-   width=720 height=576 pix_fmt=yuv420p r_frame_rate=25/1 duration=3688.120000 size=13313537536 
-N: /mnt/c/Users/irekr/Videos/Archive/99199_Romaniuk NTSC DV Files/008_Canada_III_9_NTSC.avi
-   width=720 height=480 pix_fmt=yuv411p r_frame_rate=30000/1001 duration=3688.251233 size=13976482196 

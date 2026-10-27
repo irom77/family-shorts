@@ -1,9 +1,0 @@
-P: /mnt/c/Users/irekr/Videos/Archive/99199_Romaniuk PAL DV Files/001_3,05,1996.avi
-   width=720 height=480 pix_fmt=yuv411p r_frame_rate=30000/1001 duration=3502.732567 size=12631884288 
-N: /mnt/c/Users/irekr/Videos/Archive/99199_Romaniuk NTSC DV Files/001_3,05,1996_NTSC.avi
-   width=720 height=480 pix_fmt=yuv411p r_frame_rate=30000/1001 duration=3502.732567 size=13273509564 
-frames: P=104977 N=104977 compared=104977 -> MATCH
-audio:  3502 of 3503 one-second chunks identical (P 3503 s, N 3503 s)
-video:  identical frames=0, differing=104977, PSNR avg=48.7 dB min=36.3 dB
-        frames below 35 dB: 0
-blur (lower = sharper): P=['6.808', '6.304', '5.841'] N=['6.847', '6.333', '5.862'] -> P sharper

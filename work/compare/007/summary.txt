@@ -1,9 +1,0 @@
-P: /mnt/c/Users/irekr/Videos/Archive/99199_Romaniuk PAL DV Files/007_Canada_USA_II_8.avi
-   width=720 height=576 pix_fmt=yuv420p r_frame_rate=25/1 duration=3769.520000 size=13607391232 
-N: /mnt/c/Users/irekr/Videos/Archive/99199_Romaniuk NTSC DV Files/007_Canada_USA_II_8_NTSC.avi
-   width=720 height=480 pix_fmt=yuv411p r_frame_rate=30000/1001 duration=3769.665900 size=14285016916 
-frames: P=94238 N=112977 compared=0 -> DIFFERENT
-audio:  DIFFERENT (MD5=c0b157460230… / MD5=1d3886d54371…)
-video:  all 0 frames bit-identical
-        frames below 35 dB: 0
-blur (lower = sharper): P=['4.464', '4.551', '4.914'] N=['4.632', '4.904', '5.062'] -> P sharper
