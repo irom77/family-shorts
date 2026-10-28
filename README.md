@@ -44,7 +44,14 @@ Claude picks the matching skill.
 
 - **Uploads:** YouTube allows **100 uploads per day** on this project (videos.insert has its own quota bucket).
 - **YouTube sign-in:** it expires after about **7 days**, because the Google app is in testing mode.
-  When it does, Claude asks you to run the sign-in command; it opens a browser.
+  When it does (or before a long upload run), sign in again from the repo root; it opens a browser:
+
+  ```bash
+  uv run --no-project --with google-api-python-client --with google-auth-oauthlib python \
+    .claude/skills/family-shorts/scripts/yt_family.py auth --from-token ~/.config/family-archive-youtube/token.json
+  ```
+
+  In Claude Code, prefix it with `!` so it runs in the session.
 - **Pace:** enhancement and rendering are CPU-heavy and memory-limited in WSL. Expect 1–2 hours of
   machine time per tape, and avoid heavy work in VS Code meanwhile.
 
