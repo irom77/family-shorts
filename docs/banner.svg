@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-labelledby="t d">
+  <title id="t">Family archive</title>
+  <desc id="d">A DV tape and a CD turning into a restored vertical short with bilingual captions.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c2030"/>
+      <stop offset="1" stop-color="#2d2236"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.78" cy="0.5" r="0.45">
+      <stop offset="0" stop-color="#e0a96d" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#e0a96d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="disc" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d9dde6"/>
+      <stop offset="0.3" stop-color="#b6c7e8"/>
+      <stop offset="0.45" stop-color="#e7c6e0"/>
+      <stop offset="0.6" stop-color="#f1e1b5"/>
+      <stop offset="0.75" stop-color="#bfe3d4"/>
+      <stop offset="1" stop-color="#c9ced9"/>
+    </linearGradient>
+    <linearGradient id="blur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a6f8f"/>
+      <stop offset="0.5" stop-color="#a0835f"/>
+      <stop offset="1" stop-color="#4c5a3e"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fb8de"/>
+      <stop offset="1" stop-color="#f3d3a1"/>
+    </linearGradient>
+    <linearGradient id="arrow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e0a96d" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#e0a96d"/>
+    </linearGradient>
+    <clipPath id="screen"><rect x="1036" y="66" width="148" height="264" rx="14"/></clipPath>
+    <pattern id="perf" width="28" height="14" patternUnits="userSpaceOnUse">
+      <rect x="6" y="3" width="14" height="8" rx="2" fill="#f5efe6" opacity="0.07"/>
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="400" rx="24" fill="url(#bg)"/>
+  <rect width="1280" height="400" rx="24" fill="url(#glow)"/>
+  <!-- film-strip edges -->
+  <rect x="24" y="12" width="1232" height="14" fill="url(#perf)"/>
+  <rect x="24" y="374" width="1232" height="14" fill="url(#perf)"/>
+
+  <!-- text -->
+  <g font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+    <text x="72" y="168" font-size="60" font-weight="700" fill="#f5efe6">Family archive</text>
+    <text x="74" y="216" font-size="25" fill="#cfc4b6">Old DV tapes and CDs → restored 9:16 Shorts</text>
+    <text x="74" y="268" font-size="18" font-weight="600" letter-spacing="1.5" fill="#e0a96d">RECOVER · RESTORE · CAPTION PL/EN · SHARE</text>
+  </g>
+
+  <!-- DV cassette -->
+  <g transform="translate(700 92) rotate(-6)">
+    <rect width="190" height="120" rx="10" fill="#353b4c" stroke="#59607a" stroke-width="2"/>
+    <rect x="14" y="12" width="162" height="30" rx="4" fill="#e0a96d"/>
+    <rect x="24" y="22" width="80" height="4" rx="2" fill="#7a5530" opacity="0.6"/>
+    <rect x="24" y="30" width="54" height="4" rx="2" fill="#7a5530" opacity="0.45"/>
+    <text x="150" y="34" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#5b3d1f">DV</text>
+    <rect x="34" y="56" width="122" height="44" rx="8" fill="#1d2130"/>
+    <circle cx="66" cy="78" r="15" fill="#2b3042" stroke="#8a90a8" stroke-width="2"/>
+    <circle cx="124" cy="78" r="15" fill="#2b3042" stroke="#8a90a8" stroke-width="2"/>
+    <circle cx="66" cy="78" r="5" fill="#8a90a8"/>
+    <circle cx="124" cy="78" r="5" fill="#8a90a8"/>
+    <rect x="80" y="74" width="30" height="8" rx="2" fill="#4a3a2c"/>
+  </g>
+
+  <!-- CD -->
+  <g transform="translate(800 292)">
+    <circle r="66" fill="url(#disc)" stroke="#9aa2b5" stroke-width="1.5"/>
+    <circle r="52" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="12" stroke-dasharray="34 130" transform="rotate(-130)"/>
+    <circle r="22" fill="#e9ecf2" stroke="#9aa2b5" stroke-width="1.5"/>
+    <circle r="9" fill="#24283a"/>
+  </g>
+
+  <!-- arrow and sparkles -->
+  <path d="M 900 212 C 940 200, 975 196, 1006 198" fill="none" stroke="url(#arrow)" stroke-width="6" stroke-linecap="round"/>
+  <path d="M 994 184 L 1014 198 L 994 212" fill="none" stroke="#e0a96d" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#f5d9a8">
+    <path d="M 952 160 l 4 10 l 10 4 l -10 4 l -4 10 l -4 -10 l -10 -4 l 10 -4 z"/>
+    <path d="M 930 246 l 3 7 l 7 3 l -7 3 l -3 7 l -3 -7 l -7 -3 l 7 -3 z" opacity="0.8"/>
+  </g>
+
+  <!-- phone with a 9:16 blur-fill short -->
+  <rect x="1026" y="52" width="168" height="292" rx="24" fill="#0e1018" stroke="#3c4256" stroke-width="2"/>
+  <g clip-path="url(#screen)">
+    <rect x="1036" y="66" width="148" height="264" fill="url(#blur)"/>
+    <rect x="1036" y="66" width="148" height="264" fill="#1c2030" opacity="0.35"/>
+    <!-- the 4:3 picture -->
+    <g>
+      <rect x="1036" y="143" width="148" height="111" fill="url(#sky)"/>
+      <circle cx="1146" cy="176" r="14" fill="#fff1c9"/>
+      <path d="M 1036 228 Q 1070 200 1104 222 T 1184 214 L 1184 254 L 1036 254 Z" fill="#6f8f5a"/>
+      <path d="M 1036 240 Q 1090 222 1140 240 T 1184 236 L 1184 254 L 1036 254 Z" fill="#56744a"/>
+    </g>
+    <!-- bilingual title -->
+    <rect x="1050" y="90" width="92" height="9" rx="4" fill="#f5efe6"/>
+    <rect x="1050" y="106" width="68" height="6" rx="3" fill="#f5efe6" opacity="0.65"/>
+    <!-- caption -->
+    <rect x="1062" y="276" width="96" height="8" rx="4" fill="#f5efe6"/>
+    <rect x="1074" y="290" width="72" height="6" rx="3" fill="#f5efe6" opacity="0.65"/>
+  </g>
+  <circle cx="1110" cy="198" r="17" fill="#000" opacity="0.35"/>
+  <path d="M 1104 189 L 1120 198 L 1104 207 Z" fill="#f5efe6"/>
+  <rect x="1092" y="58" width="36" height="5" rx="2.5" fill="#2a2f40"/>
+</svg>

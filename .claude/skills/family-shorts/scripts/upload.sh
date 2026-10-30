@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Upload shorts listed in the tape's manifest.json to @irom77. Only after the user said so.
+# Upload shorts listed in the tape's manifest.json to the tape's channel. Only after the user said so.
 # usage: upload.sh <tape-dir> <private|unlisted|public> NN [NN...]   log: <tape-dir>/plan/upload.log
 # videos.insert has its own quota bucket: 100 uploads per day per Cloud project.
 HERE="$(cd "$(dirname "$0")" && pwd)"

@@ -122,7 +122,7 @@ workflow: general-video
 flow: automation
 storyboard: yes
 message: "A warm, real moment from our family's past — {title}"
-destination: YouTube Shorts (@irom77), private upload only after confirmation
+destination: YouTube Shorts (family channel), private upload only after confirmation
 aspect: "9:16"
 language: bilingual (Polish main line, English subtitle)
 length: 30–180s (target 45–90s)

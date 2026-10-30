@@ -6,8 +6,8 @@ so the FPV channel and the family channel can never be mixed up.
 
   yt_family.py auth  [--client client_secret.json | --from-token other_token.json]
   yt_family.py channel
-  yt_family.py upload --manifest manifest.json --short short_01 --privacy private --expect-channel @irom77
-  yt_family.py playlist --manifest manifest.json --title "…" --privacy unlisted --expect-channel @irom77
+  yt_family.py upload --manifest manifest.json --short short_01 --privacy private --expect-channel @handle
+  yt_family.py playlist --manifest manifest.json --title "…" --privacy unlisted --expect-channel @handle
 """
 import argparse
 import json

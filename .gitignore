@@ -1,5 +1,7 @@
 # Working files (media, renders and plans) stay local.
 work/
+# Machine-specific paths and channel (see local.env.example).
+local.env
 __pycache__/
 .vscode/
 node_modules/

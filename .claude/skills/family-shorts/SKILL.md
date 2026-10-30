@@ -1,6 +1,6 @@
 ---
 name: family-shorts
-description: Turn a family DV tape (NTSC or PAL .avi from the Romaniuk archive) into restored 9:16 YouTube Shorts with bilingual Polish/English titles, render them with HyperFrames, and upload them to @irom77. Use when the user wants shorts/clips/reels from a tape, asks to make the next tape (002, 003, 005–008), re-render or re-caption a short, upload or change privacy of a family short, or compare the PAL/NTSC copies of a tape.
+description: Turn a family DV tape (NTSC or PAL .avi from the family archive) into restored 9:16 YouTube Shorts with bilingual Polish/English titles, render them with HyperFrames, and upload them to the family channel. Use when the user wants shorts/clips/reels from a tape, asks to make the next tape, re-render or re-caption a short, upload or change privacy of a family short, or compare the PAL/NTSC copies of a tape.
 ---
 
 # Family archive → YouTube Shorts
@@ -8,7 +8,8 @@ description: Turn a family DV tape (NTSC or PAL .avi from the Romaniuk archive) 
 One tape becomes several 45–90 s vertical shorts. Picking the moments, writing the captions and
 reviewing the frames is your job. Scanning, enhancement, project building, rendering, manifests and
 upload are scripts in `scripts/`; `<skill>` below means this skill's folder
-(`/home/irom/archive/.claude/skills/family-shorts`).
+(`/home/irom/archive/.claude/skills/family-shorts`). Real folder paths and the channel id are in
+`/home/irom/archive/local.env` (not in git; `$SOURCES_PAL`, `$SHORTS`, `$CHANNEL` below come from it).
 
 ## Fixed rules (the user chose these; don't change them without asking)
 
@@ -23,17 +24,17 @@ upload are scripts in `scripts/`; `<skill>` below means this skill's folder
   shorts' TSVs are the record of what's taken.
 - **Review before upload:** show the user the storyboard (shot list plus captions) before enhancing.
   Upload only after the user says so explicitly, with the privacy they name; when they name none, use `unlisted` (the user's default since 2026-10-25: watchable by anyone with the link, not listed in search or on the channel). Playlists are unlisted too, since a public playlist would expose the unlisted videos in it.
-  Don't upload anything sensitive, such as undressed children (short 08 of tape 001 was kept off
-  YouTube for this reason).
+  Don't upload anything sensitive, such as undressed children; such a short is rendered but kept off
+  YouTube.
 - **Snapshots:** always `--describe false`. Without it, frames go to Gemini.
 
 ## Folders
 
 | What | Where |
 |---|---|
-| Sources | `/mnt/c/Users/irekr/Videos/Archive/99199_Romaniuk PAL DV Files/` and `… NTSC DV Files/` |
+| Sources | `$SOURCES_PAL/` and `$SOURCES_NTSC/` |
 | Working files per tape | `/home/irom/archive/work/<tape>/` (`plan/`, `scan/`, `clips/`, `shortNN/`) |
-| Finished MP4s + `manifest.json` | `/mnt/c/Users/irekr/Videos/Archive/Shorts/<tape>_<yyyy-mm-dd>/` |
+| Finished MP4s + `manifest.json` | `$SHORTS/<tape>_<yyyy-mm-dd>/` |
 
 **Which source:**
 
@@ -51,9 +52,9 @@ upload are scripts in `scripts/`; `<skill>` below means this skill's folder
 Every script takes the tape folder (`work/<tape>`) first and reads `plan/tape.json` from it:
 
 ```json
-{ "tape": "002", "source": "/mnt/c/.../002_15,08,1993_Chrzest_Oli.avi",
-  "out_dir": "/mnt/c/Users/irekr/Videos/Archive/Shorts/002_1993-08-15",
-  "end_en": "Family archive · 1993", "channel": "UCBoriY5wyxsxBh09ctbyvnw" }
+{ "tape": "002", "source": "<$SOURCES_PAL>/002_<date>_<occasion>.avi",
+  "out_dir": "<$SHORTS>/002_<yyyy-mm-dd>",
+  "end_en": "Family archive · <year>", "channel": "<$CHANNEL>" }
 ```
 
 ### 1. Scan the tape
@@ -83,10 +84,10 @@ Write one short per event or theme.
 
 ```json
 "09": { "file": "short_09_<slug>.mp4",
-        "title": { "pl": "Tort", "date": "3 maja 1996", "en": "The cake · May 3, 1996" },
+        "title": { "pl": "Tort", "date": "1 czerwca 1995", "en": "The cake · June 1, 1995" },
         "captions": [ { "id": "cap-candles", "at": "c03", "pl": "Zdmuchnij świeczki!", "en": "Blow out the candles!" } ],
-        "yt_title": "Tort · 3 maja 1996 | The cake, 1996 #shorts",
-        "yt_desc": "Archiwum rodzinne: … Nagranie z kasety DV, odrestaurowane.\nFamily archive: … Restored from DV tape.\n\n#shorts #archiwum #1996 #familyarchive #homevideo",
+        "yt_title": "Tort · 1 czerwca 1995 | The cake, 1995 #shorts",
+        "yt_desc": "Archiwum rodzinne: … Nagranie z kasety DV, odrestaurowane.\nFamily archive: … Restored from DV tape.\n\n#shorts #archiwum #1995 #familyarchive #homevideo",
         "tags": ["…", "archiwum rodzinne", "family archive", "home video", "dv tape", "shorts"] }
 ```
 
@@ -165,16 +166,16 @@ nohup setsid <skill>/scripts/upload.sh work/<tape> unlisted 09 10 > work/<tape>/
 
 - **Quota:** videos.insert has its own bucket of 100 calls per day per Cloud project, separate from the 10,000-unit pool for other calls (the pool still pays for the `privacy` updates).
 - **Channel cap:** separately from quota, YouTube refuses with `uploadLimitExceeded` after about
-  10 uploads per rolling 24 h on @irom77 (hit on 2026-10-25). Count the `uploaded_at` times in all
+  10 uploads per rolling 24 h on the channel. Count the `uploaded_at` times in all
   manifests before a batch; upload the rest once the oldest upload in the window is 24 h old.
 - **What it writes:** the uploader records each video's id, URL and channel in the manifest.
 - **Check:** `curl -s -o /dev/null -w '%{http_code}' "https://www.youtube.com/oembed?url=<url>"`
   should give 200 for public and unlisted videos.
 - **Playlist per tape:** after the uploads finish (not while they run — both write the manifest),
-  `yt_family.py playlist --manifest … --title "…" --description "…" --expect-channel UCBoriY5wyxsxBh09ctbyvnw`
+  `yt_family.py playlist --manifest … --title "…" --description "…" --expect-channel "$CHANNEL"`
   creates the playlist once, records it in the manifest and adds any uploaded short not yet in it,
   in manifest order. Rerun it after later uploads. No names of people or places in the title.
-- **Change privacy later:** `yt_family.py privacy --manifest … --short short_NN --privacy unlisted --expect-channel UCBoriY5wyxsxBh09ctbyvnw`.
+- **Change privacy later:** `yt_family.py privacy --manifest … --short short_NN --privacy unlisted --expect-channel "$CHANNEL"`.
 - **Sign-in:** the OAuth app is in testing mode, so the token lasts about 7 days. On an auth error the
   user re-signs in with:
   `! uv run --no-project --with google-api-python-client --with google-auth-oauthlib python <skill>/scripts/yt_family.py auth --from-token ~/.config/family-archive-youtube/token.json`
