@@ -21,6 +21,7 @@ Claude picks the matching skill.
 | Skill | What it does | Say something like |
 |---|---|---|
 | [`family-shorts`](.claude/skills/family-shorts/SKILL.md) | One DV tape → restored 9:16 YouTube Shorts with Polish/English captions, rendered with HyperFrames and uploaded to the family YouTube channel | "make shorts from tape 002", "upload shorts 09–11", "make short 05 unlisted" |
+| [`family-catalog`](.claude/skills/family-catalog/SKILL.md) | The channel's public and unlisted videos → one polished, phone-friendly HTML file to send to family by email or a messaging app; tapping a video opens YouTube | "refresh the family catalog", "leave this video out of the catalog" |
 | [`cd-recovery`](.claude/skills/cd-recovery/SKILL.md) | An old CD or DVD → its videos and photos copied off, damaged spots skipped instead of freezing the drive, videos converted to MP4 with a contact sheet and a damage report | "explore the CD in the drive", "rescue the videos on this CD", "the copy from D: is stuck" |
 
 ### family-shorts
@@ -85,6 +86,22 @@ holds the original tape-001 versions and is kept for reference only.
 
 **Status.** Uploads are unlisted by default. Each tape's `manifest.json` in `$SHORTS/<tape>_<date>/`
 records what was uploaded, with links.
+
+### family-catalog
+
+**What it makes.** One HTML file (`$ARCHIVE/Catalog/`) listing every public and unlisted video on the
+channel, grouped by playlist, with thumbnails embedded and a search box. It needs no hosting and no
+sign-in for the people who receive it: it opens from an email or chat, and tapping a video opens it in
+YouTube. Private videos never appear.
+
+**Updating.** After new uploads, say *"refresh the family catalog"* and send the new file. To leave a
+video out, list its id in `$ARCHIVE/Catalog/skip.txt`.
+
+**Home Screen.** An attached file can't become an iPhone Home Screen icon. Optionally the script keeps an
+unlisted "all videos" playlist complete (`--all-playlist`); its link can be added to the Home Screen
+from Safari and always shows the latest videos. What to tell family:
+
+> If you want an icon on your Home Screen: open the link in Safari → Share → Add to Home Screen → Add.
 
 ### cd-recovery
 
