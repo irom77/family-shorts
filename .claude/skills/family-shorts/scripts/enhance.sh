@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Enhance one DV segment into a 1080x1920 blur-fill vertical clip.
 # usage: enhance.sh <source.avi> <start_sec> <dur_sec> <out.mp4>
-# Handles NTSC DV (720x480, SAR 8:9) and PAL DV (720x576, SAR 16:15); both come out at 30 fps.
+# Handles NTSC DV (720x480, SAR 8:9), PAL DV (720x576, SAR 16:15) and Video CD (352x288 progressive
+# MPEG-1, 4:3 whatever its SAR flag says); all come out at 30 fps.
 set -euo pipefail
 SRC="$1"; SS="$2"; DUR="$3"; OUT="$4"
 TMP="$(dirname "$OUT")/.$(basename "$OUT" .mp4)"
@@ -10,7 +11,10 @@ TRF="$TMP/transforms.trf"
 H=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$SRC")
 
 # Common front: deinterlace, crop overscan + head-switching noise, square pixels.
-if [ "$H" = 576 ]; then
+if [ "$H" = 288 ]; then
+  # Video CD: already progressive; soften MPEG-1 block edges before the denoise and upscale.
+  PRE="crop=344:280:4:4,deblock=filter=weak:block=8,scale=374:280:flags=lanczos,setsar=1"
+elif [ "$H" = 576 ]; then
   PRE="bwdif=mode=send_frame:parity=auto:deint=all,crop=704:564:8:6,scale=752:564:flags=lanczos,setsar=1"
 else
   PRE="bwdif=mode=send_frame:parity=auto:deint=all,crop=704:464:8:6,scale=626:464:flags=lanczos,setsar=1"

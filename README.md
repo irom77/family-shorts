@@ -73,7 +73,7 @@ first and reads its `plan/tape.json`):
 |---|---|
 | `scan.sh` | Contact sheets, scene cuts and loudness for a whole tape |
 | `verify_sheet.sh` | Start/middle/end stills of every shot of one short |
-| `enhance.sh` / `enhance_batch.sh` | Restore shots to 1080x1920 clips (NTSC or PAL), 3 at a time |
+| `enhance.sh` / `enhance_batch.sh` | Restore shots to 1080x1920 clips (NTSC or PAL DV, or a Video CD), 3 at a time |
 | `make_short.py` | Build a HyperFrames project from `plan/shortNN.tsv` + `plan/copy.json` |
 | `render_all.sh` | Render one by one and copy to the Shorts folder |
 | `manifest.py` | Add rendered shorts to the folder's `manifest.json` |

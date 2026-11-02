@@ -17,7 +17,7 @@ ps "Get-CimInstance Win32_LogicalDisk -Filter \"DeviceID='$DRIVE:'\" | Select De
 ps "Get-PnpDevice -Class CDROM -PresentOnly | Select FriendlyName,InstanceId | Format-List" | grep -v '^$'
 
 echo "== Files (path, bytes, date)"
-FILES=$(T=120 ps "Get-ChildItem -LiteralPath '$DRIVE:\' -Recurse -Force -File | % { '{0}`t{1}`t{2:yyyy-MM-dd}' -f \$_.FullName, \$_.Length, \$_.LastWriteTime }")
+FILES=$(T=120 ps "Get-ChildItem -LiteralPath '$DRIVE:\' -Recurse -Force -File | % { (\$_.FullName, \$_.Length, \$_.LastWriteTime.ToString('yyyy-MM-dd')) -join [char]9 }")
 echo "$FILES"
 
 echo "== Disc type"
