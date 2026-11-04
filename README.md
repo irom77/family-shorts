@@ -96,9 +96,35 @@ set in `local.env` as `CF_PROJECT` and `CATALOG_PATH`. Like an unlisted video, a
 open it, nobody needs to sign in, and nothing links to it or indexes it. The same page is also saved as
 a file in `$ARCHIVE/Catalog/` to send as an attachment.
 
-**Updating.** After new uploads, say *"refresh and publish the family catalog"*. The link stays the same.
-To leave a video out, list its id in `$ARCHIVE/Catalog/skip.txt`. The first publish needs a free
-Cloudflare account: run `npx wrangler login` once.
+**The link.** It is `https://$CF_PROJECT.pages.dev/$CATALOG_PATH/`, with both values from `local.env`.
+It is never written into the repo. To print it: `source local.env && echo "https://$CF_PROJECT.pages.dev/$CATALOG_PATH/"`.
+
+**Updating the live page.** The link stays the same, so family just reopen it (or tap the icon).
+
+1. Upload the new shorts and let their playlist be created (family-shorts).
+2. Say *"refresh and publish the family catalog"*. Claude rebuilds the page from YouTube, shows you
+   anything new under "Inne / Other", and publishes it once you say so.
+
+Without Claude, run from the repo root:
+
+```bash
+source local.env
+uv run -q --no-project --with google-api-python-client --with google-auth-oauthlib \
+  python .claude/skills/family-catalog/scripts/catalog.py --expect-channel "$CHANNEL" \
+  --out "$ARCHIVE/Catalog/Archiwum_rodzinne.html" --site "$ARCHIVE/Catalog/site" --site-path "$CATALOG_PATH" \
+  --skip "$ARCHIVE/Catalog/skip.txt" --all-playlist "$ALL_PLAYLIST"
+(cd "$(mktemp -d)" && npx --yes wrangler@4.151.0 pages deploy "$ARCHIVE/Catalog/site" \
+  --project-name "$CF_PROJECT" --branch main --commit-dirty=true)
+```
+
+- **Leave a video out:** list its id in `$ARCHIVE/Catalog/skip.txt`.
+- **Sign-ins:** the build uses the YouTube sign-in from family-shorts. If the deploy says you're not
+  signed in to Cloudflare, run `npx wrangler login`.
+- **Deploy from an empty folder** (the `mktemp -d` above). Never run `wrangler pages project create`:
+  in the current wrangler it auto-configures and tries to publish whatever folder you're in.
+- **If the link leaks:** put a new random `CATALOG_PATH` in `local.env`, rebuild, publish, and send
+  family the new link. Then delete the old deployments in the Cloudflare dashboard (Workers & Pages →
+  the project → Deployments), since each one keeps its own address.
 
 **Home Screen.** The page has its own icon. What to tell family:
 
