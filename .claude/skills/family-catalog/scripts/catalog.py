@@ -2,9 +2,13 @@
 """Build one self-contained HTML catalog of the family channel's public and unlisted videos.
 
 Grouped by playlist (oldest year first), with thumbnails embedded so the file works as an email or
-messaging attachment: nothing is hosted, and tapping a video opens it in the YouTube app.
+messaging attachment, or as a page at an unguessable address; tapping a video opens it in the YouTube app.
 
-  catalog.py --expect-channel <channel> --out <file.html> [--all-playlist PLAYLIST_ID] [--skip skip.txt]
+  catalog.py --expect-channel <channel> [--out <file.html>] [--site DIR --site-path SECRET]
+             [--all-playlist PLAYLIST_ID] [--skip skip.txt]
+
+--site writes DIR/SECRET/index.html with its Home Screen icon, plus DIR/404.html, ready for
+`wrangler pages deploy DIR`.
 
 Uses the family-shorts sign-in (~/.config/family-archive-youtube/token.json). Thumbnails are cached in
 ~/.cache/family-catalog/. With --all-playlist, every listed video missing from that playlist is
@@ -15,6 +19,7 @@ import argparse
 import base64
 import html
 import re
+import shutil
 import subprocess
 import sys
 import urllib.request
@@ -146,7 +151,10 @@ TEMPLATE = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="dark light">
+<meta name="apple-mobile-web-app-title" content="Archiwum">
+<link rel="apple-touch-icon" href="icon.png">
 <title>Archiwum rodzinne</title>
 <style>
 :root {{ --bg:#16192a; --bg2:#1f2336; --card:#262a3f; --text:#f5efe6; --muted:#b9ae9f; --accent:#e0a96d; --line:#33384f; }}
@@ -229,10 +237,14 @@ document.getElementById("q").addEventListener("input", function (ev) {{
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--expect-channel", required=True, help="channel id, title or @handle")
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--out", help="the single HTML file to send as an attachment")
+    ap.add_argument("--site", help="folder to publish: <site>/<site-path>/ gets the page and its icon")
+    ap.add_argument("--site-path", help="secret folder name the page lives under (the site root shows nothing)")
     ap.add_argument("--all-playlist", help="playlist id that should hold every listed video")
     ap.add_argument("--skip", help="file of video ids to leave out, one per line")
     a = ap.parse_args()
+    if not (a.out or a.site) or bool(a.site) != bool(a.site_path):
+        ap.error("give --out, or --site with --site-path, or both")
 
     yt = youtube()
     chans = channels(yt)
@@ -263,10 +275,19 @@ def main():
         all_url = f"https://www.youtube.com/playlist?list={a.all_playlist}"
 
     built = "Stan na / As of " + datetime.now().strftime("%Y-%m-%d")
-    out = Path(a.out)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(page(sections, all_url, built), encoding="utf-8")
-    print("CATALOG", out, f"{len(order)} videos in {len(sections)} sections, {out.stat().st_size // 1024} KB")
+    text = page(sections, all_url, built)
+    outs = [Path(a.out)] if a.out else []
+    if a.site:
+        site = Path(a.site)
+        outs.append(site / a.site_path / "index.html")
+        outs[-1].parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(Path(__file__).resolve().parents[1] / "assets" / "icon.png", outs[-1].parent / "icon.png")
+        # A 404.html also stops Cloudflare Pages from serving a page for every unknown path.
+        (site / "404.html").write_text("<!doctype html><title>404</title>", encoding="utf-8")
+    for out in outs:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text, encoding="utf-8")
+        print("CATALOG", out, f"{len(order)} videos in {len(sections)} sections, {out.stat().st_size // 1024} KB")
 
 
 if __name__ == "__main__":
