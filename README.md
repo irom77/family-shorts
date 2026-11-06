@@ -115,11 +115,14 @@ source local.env
 uv run -q --no-project --with google-api-python-client --with google-auth-oauthlib \
   python .claude/skills/family-catalog/scripts/catalog.py --expect-channel "$CHANNEL" \
   --out "$ARCHIVE/Catalog/Archiwum_rodzinne.html" --site "$ARCHIVE/Catalog/site" --site-path "$CATALOG_PATH" \
-  --skip "$ARCHIVE/Catalog/skip.txt" --all-playlist "$ALL_PLAYLIST"
+  --skip "$ARCHIVE/Catalog/skip.txt" --all-playlist "$ALL_PLAYLIST" --news "$ARCHIVE/Catalog/news.json"
 (cd "$(mktemp -d)" && npx --yes wrangler@4.151.0 pages deploy "$ARCHIVE/Catalog/site" \
   --project-name "$CF_PROJECT" --branch main --commit-dirty=true)
 ```
 
+- **What's new:** the page opens with a "Nowości / What's new" box: when it was last updated and what
+  was added or fixed in the last 30 days, linked to the playlists. New cards carry a "Nowe" badge.
+  `news.json` remembers the previous build, so keep it.
 - **Leave a video out:** list its id in `$ARCHIVE/Catalog/skip.txt`.
 - **Sign-ins:** the build uses the YouTube sign-in from family-shorts. If the deploy says you're not
   signed in to Cloudflare, run `npx wrangler login`.

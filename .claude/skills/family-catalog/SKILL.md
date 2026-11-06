@@ -27,11 +27,20 @@ Run from the repo root after `source local.env`:
 PYTHONUNBUFFERED=1 uv run -q --no-project --with google-api-python-client --with google-auth-oauthlib \
   python -u <skill>/scripts/catalog.py --expect-channel "$CHANNEL" \
   --out "$ARCHIVE/Catalog/Archiwum_rodzinne.html" --site "$ARCHIVE/Catalog/site" --site-path "$CATALOG_PATH" \
-  --skip "$ARCHIVE/Catalog/skip.txt" --all-playlist "$ALL_PLAYLIST"
+  --skip "$ARCHIVE/Catalog/skip.txt" --all-playlist "$ALL_PLAYLIST" --news "$ARCHIVE/Catalog/news.json"
 ```
 
 - **Sign-in:** the same token as family-shorts. On an auth error, use the sign-in command in that skill.
 - **Run it after uploads finish**, not while an uploader runs, so the newest shorts are in their playlists.
+- **Thumbnails:** YouTube makes a new upload's thumbnail a few minutes after the upload. The build
+  waits up to 15 minutes for missing ones. It prints `NO THUMBNAIL` for any still missing; those cards
+  show a plain tile, so rebuild later.
+- **News:** `--news` keeps a log between builds (not in git). Under the title, the page shows a
+  "Nowości / What's new" box with the build date and the last three days with changes in the past
+  30 days. Each line links to its playlist's section. Cards added in the last 7 days get a "Nowe"
+  badge. A re-upload with the same title as a video that left the catalog counts as "poprawione /
+  fixed", not as new. The first build seeds the log from upload dates. Always pass the same file:
+  with a new one, the news starts over from upload dates and misses re-uploads.
 - **Home Screen:** the site page has its icon (`assets/icon.png`, titled "Archiwum"). An attachment
   can't become a Home Screen icon.
 - **Leave videos out:** add their ids to `$ARCHIVE/Catalog/skip.txt`, one per line (`#` starts a comment).

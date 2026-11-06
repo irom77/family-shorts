@@ -14,16 +14,20 @@ Uses the family-shorts sign-in (~/.config/family-archive-youtube/token.json). Th
 ~/.cache/family-catalog/. With --all-playlist, every listed video missing from that playlist is
 added to it, in catalog order, so one link (pinned to a Home Screen) always shows everything.
 --skip names a text file of video ids to leave out, one per line (# starts a comment).
+--news names a JSON file kept between builds: the page gets a "Nowości" box listing videos added or
+replaced in the last 30 days, and recent cards a "Nowe" badge.
 """
 import argparse
 import base64
 import html
+import json
 import re
 import shutil
 import subprocess
 import sys
+import time
 import urllib.request
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "family-shorts" / "scripts"))
@@ -42,25 +46,32 @@ def pages(call, **kw):
             return
 
 
-def thumb(vid):
-    """270x480 JPEG data URI: the Short's own vertical frame, else the 16:9 one cropped to fit."""
+def fetch_thumb(vid):
+    """Cache a 270x480 JPEG: the Short's own vertical frame, else the 16:9 one cropped to fit.
+    False while YouTube has not made the thumbnails yet (the first minutes after an upload)."""
     out = CACHE / f"{vid}.jpg"
-    if not out.exists():
-        CACHE.mkdir(parents=True, exist_ok=True)
-        src = CACHE / f"{vid}.src.jpg"
-        for name in ("oar2", "hqdefault"):
-            try:
-                src.write_bytes(urllib.request.urlopen(f"https://i.ytimg.com/vi/{vid}/{name}.jpg", timeout=30).read())
-                break
-            except Exception:
-                continue
-        else:
-            return ""
-        subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", str(src), "-vf",
-                        "scale=270:480:force_original_aspect_ratio=increase,crop=270:480", "-q:v", "6", str(out)],
-                       check=True)
-        src.unlink()
-    return "data:image/jpeg;base64," + base64.b64encode(out.read_bytes()).decode()
+    if out.exists():
+        return True
+    CACHE.mkdir(parents=True, exist_ok=True)
+    src = CACHE / f"{vid}.src.jpg"
+    for name in ("oar2", "hqdefault"):
+        try:
+            src.write_bytes(urllib.request.urlopen(f"https://i.ytimg.com/vi/{vid}/{name}.jpg", timeout=30).read())
+            break
+        except Exception:
+            continue
+    else:
+        return False
+    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", str(src), "-vf",
+                    "scale=270:480:force_original_aspect_ratio=increase,crop=270:480", "-q:v", "6", str(out)],
+                   check=True)
+    src.unlink()
+    return True
+
+
+def thumb(vid):
+    out = CACHE / f"{vid}.jpg"
+    return "data:image/jpeg;base64," + base64.b64encode(out.read_bytes()).decode() if out.exists() else ""
 
 
 def duration(iso):
@@ -88,6 +99,90 @@ def split_title(t):
 def year(text):
     m = re.search(r"\b(19|20)\d{2}\b", text)
     return int(m.group()) if m else 9999
+
+
+MONTHS = ["stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca", "lipca", "sierpnia", "września",
+          "października", "listopada", "grudnia"]
+NEWS_DAYS = 30  # the news box shows changes this recent
+BADGE_DAYS = 7  # cards this recent get a "Nowe" badge
+
+
+def pl_date(d):
+    return f"{d.day} {MONTHS[d.month - 1]} {d.year}"
+
+
+def nowe(n):
+    """'1 nowy film', '2 nowe filmy', '5 nowych filmów'."""
+    if n == 1:
+        return "1 nowy film"
+    few = n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14)
+    return f"{n} nowe filmy" if few else f"{n} nowych filmów"
+
+
+def news(path, videos, sections, today):
+    """Update the news log at path with what changed since the last build; return the log, newest first.
+
+    The log keeps the ids and titles seen last time. A new id whose title matches a video that has left
+    the catalog is a fixed copy (a re-upload), not a new video. The first build seeds the log from upload
+    dates, so recent uploads still show up as news.
+    """
+    p = Path(path)
+    now = {v["id"]: split_title(v["snippet"]["title"])[0] for _, _, vs in sections for v in vs}
+    if p.exists():
+        st = json.loads(p.read_text())
+        log, seen = st["log"], st["seen"]
+        added = [v for v in now if v not in seen]
+        gone = {t: v for v, t in seen.items() if v not in now}
+        if added:
+            if not log or log[0]["date"] != today.isoformat():
+                log.insert(0, {"date": today.isoformat(), "new": [], "fixed": []})
+            for v in added:
+                old = gone.get(now[v])
+                log[0]["fixed" if old else "new"].append(v)
+                for ent in log[1:] if old else []:  # earlier news points at the fixed copy now
+                    ent["new"] = [v if x == old else x for x in ent["new"]]
+    else:
+        by_day = {}
+        for v in now:
+            d = datetime.fromisoformat(videos[v]["snippet"]["publishedAt"].replace("Z", "+00:00")).astimezone().date()
+            if (today - d).days <= NEWS_DAYS:
+                by_day.setdefault(d.isoformat(), []).append(v)
+        log = [{"date": d, "new": vs, "fixed": []} for d, vs in sorted(by_day.items(), reverse=True)]
+    log = log[:50]
+    p.write_text(json.dumps({"seen": now, "log": log}, ensure_ascii=False, indent=1) + "\n")
+    return log
+
+
+def news_box(log, sections, built):
+    """'Nowości' box under the title: the latest changes, each linked to its playlist's section."""
+    e = html.escape
+    where = {}
+    for n, (title, _, vs) in enumerate(sections):
+        for v in vs:
+            where.setdefault(v["id"], (n, title.split(" | ", 1)[0]))
+    items = []
+    for ent in log:
+        d = date.fromisoformat(ent["date"])
+        if (built - d).days > NEWS_DAYS or len(items) == 3:
+            break
+        lines = []
+        for kind in ("new", "fixed"):
+            per = {}
+            for v in ent[kind]:
+                if v in where:
+                    per.setdefault(where[v], []).append(v)
+            for (n, title), vs in sorted(per.items()):
+                what = (f'{nowe(len(vs))} <i>{len(vs)} new</i>' if kind == "new" else
+                        f'{"poprawiony film" if len(vs) == 1 else f"poprawione filmy: {len(vs)}"} '
+                        f'<i>{len(vs)} fixed</i>')
+                lines.append(f'<li><a href="#s{n}">{e(title)}</a> · {what}</li>')
+        if lines:
+            items.append(f'<div class="day"><b>{pl_date(d)}</b><ul>{"".join(lines)}</ul></div>')
+    stamp = f'Zaktualizowano {pl_date(built)} <i>Updated {built:%b %-d, %Y}</i>'
+    if not items:
+        return f'<p class="updated">{stamp}</p>'
+    return (f'<aside class="news"><h2>Nowości <i>What’s new</i></h2>{"".join(items)}'
+            f'<p class="updated">{stamp}</p></aside>')
 
 
 def collect(yt):
@@ -120,19 +215,24 @@ def add_to_playlist(yt, pid, order):
     return len([v for v in order if v not in have])
 
 
-def page(sections, all_url, built):
+def page(sections, all_url, built, log=None):
     e = html.escape
     total = len({v["id"] for _, _, vs in sections for v in vs})
     chips, body = [], []
+    fresh = {v for ent in log or [] if (built - date.fromisoformat(ent["date"])).days <= BADGE_DAYS
+             for v in ent["new"]}
     for n, (title, url, vs) in enumerate(sections):
         pl, en = (title.split(" | ", 1) + [""])[:2]
         chips.append(f'<a class="chip" href="#s{n}">{e(pl)}</a>')
         cards = []
         for v in vs:
             tpl, ten = split_title(v["snippet"]["title"])
+            src = thumb(v["id"])
+            img = f'<img src="{src}" alt="" loading="lazy">' if src else '<span class="noimg">▶</span>'
+            badge = '<span class="new">Nowe</span>' if v["id"] in fresh else ""
             cards.append(
                 f'<a class="card" href="https://youtu.be/{v["id"]}" data-q="{e((tpl + " " + ten).lower())}">'
-                f'<span class="thumb"><img src="{thumb(v["id"])}" alt="" loading="lazy">'
+                f'<span class="thumb">{img}{badge}'
                 f'<span class="dur">{duration(v["contentDetails"].get("duration"))}</span></span>'
                 f'<span class="t">{e(tpl)}</span><span class="en">{e(ten)}</span></a>')
         play = f'<a class="play" href="{e(url)}">▶ Odtwórz wszystkie <i>Play all</i></a>' if url else ""
@@ -141,8 +241,9 @@ def page(sections, all_url, built):
                     f'<div class="grid">{"".join(cards)}</div></section>')
     allbtn = (f'<a class="all" href="{e(all_url)}">▶ Wszystkie filmy w YouTube <i>All videos in YouTube</i></a>'
               if all_url else "")
+    newsbox = news_box(log, sections, built) if log is not None else ""
     return TEMPLATE.format(total=filmy(total), chips="".join(chips), sections="".join(body), allbtn=allbtn,
-                           built=built)
+                           built="Stan na / As of " + built.isoformat(), news=newsbox)
 
 
 TEMPLATE = """<!doctype html>
@@ -201,6 +302,20 @@ h2 {{ margin:0; font:600 22px/1.2 ui-serif, "New York", Georgia, serif; }}
   color:#fff; font-size:11px; font-variant-numeric:tabular-nums; }}
 .t {{ display:block; margin-top:7px; font-weight:600; font-size:14px; }}
 .en {{ display:block; color:var(--muted); font-size:12px; margin-top:1px; }}
+.noimg {{ display:flex; height:100%; align-items:center; justify-content:center; font-size:34px; color:var(--muted); }}
+.new {{ position:absolute; left:6px; top:6px; padding:2px 7px; border-radius:6px; background:var(--accent);
+  color:#1c1710; font-size:11px; font-weight:700; letter-spacing:.3px; }}
+.news {{ margin:14px 16px 0; padding:14px 16px 10px; border-radius:16px; background:var(--card);
+  border:1px solid var(--line); border-left:4px solid var(--accent); }}
+.news h2 {{ font-size:19px; margin-bottom:6px; }}
+.news i, .updated i {{ font-style:normal; color:var(--muted); font-weight:400; font-size:.9em; }}
+.news .day {{ margin-top:8px; }}
+.news b {{ font-size:13px; color:var(--accent); }}
+.news ul {{ margin:4px 0 0; padding-left:18px; }}
+.news li {{ margin:3px 0; }}
+.news li a {{ font-weight:600; text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px; }}
+.updated {{ margin:10px 16px 0; color:var(--muted); font-size:12px; text-align:center; }}
+.news .updated {{ margin:10px 0 0; text-align:left; }}
 .hide {{ display:none !important; }}
 footer {{ text-align:center; color:var(--muted); font-size:12px; padding:8px 16px 24px; }}
 </style>
@@ -212,6 +327,7 @@ footer {{ text-align:center; color:var(--muted); font-size:12px; padding:8px 16p
   <p>Family archive · {total}</p>
   {allbtn}
 </div>
+{news}
 <nav>{chips}</nav>
 <input id="q" type="search" placeholder="Szukaj… / Search…" autocomplete="off">
 <main>{sections}</main>
@@ -242,6 +358,7 @@ def main():
     ap.add_argument("--site-path", help="secret folder name the page lives under (the site root shows nothing)")
     ap.add_argument("--all-playlist", help="playlist id that should hold every listed video")
     ap.add_argument("--skip", help="file of video ids to leave out, one per line")
+    ap.add_argument("--news", help="news log (JSON) kept between builds: the page shows what changed")
     a = ap.parse_args()
     if not (a.out or a.site) or bool(a.site) != bool(a.site_path):
         ap.error("give --out, or --site with --site-path, or both")
@@ -274,8 +391,19 @@ def main():
         print("ADDED", add_to_playlist(yt, a.all_playlist, order), "to the all-videos playlist")
         all_url = f"https://www.youtube.com/playlist?list={a.all_playlist}"
 
-    built = "Stan na / As of " + datetime.now().strftime("%Y-%m-%d")
-    text = page(sections, all_url, built)
+    missing = [v for v in order if not fetch_thumb(v)]
+    for _ in range(15):  # just-uploaded shorts get their thumbnails within minutes
+        if not missing:
+            break
+        print(f"waiting for {len(missing)} thumbnails YouTube has not made yet", flush=True)
+        time.sleep(60)
+        missing = [v for v in missing if not fetch_thumb(v)]
+    if missing:
+        print("NO THUMBNAIL (rebuild later):", *missing)
+
+    built = date.today()
+    log = news(a.news, videos, sections, built) if a.news else None
+    text = page(sections, all_url, built, log)
     outs = [Path(a.out)] if a.out else []
     if a.site:
         site = Path(a.site)
