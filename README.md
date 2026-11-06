@@ -22,6 +22,7 @@ Claude picks the matching skill.
 |---|---|---|
 | [`family-shorts`](.claude/skills/family-shorts/SKILL.md) | One DV tape → restored 9:16 YouTube Shorts with Polish/English captions, rendered with HyperFrames and uploaded to the family YouTube channel | "make shorts from tape 002", "upload shorts 09–11", "make short 05 unlisted" |
 | [`family-catalog`](.claude/skills/family-catalog/SKILL.md) | The channel's public and unlisted videos → one polished, phone-friendly page at an unguessable address (or a file to send); tapping a video opens YouTube | "refresh the family catalog", "publish the catalog", "leave this video out of the catalog" |
+| [`channel-originals`](.claude/skills/channel-originals/SKILL.md) | Old long videos already on the channel (uploaded years ago) → downloaded into the archive and cut into Shorts with the family-shorts pipeline, one playlist per old video | "make shorts from the old video <title>", "list the old long videos on the channel" |
 | [`cd-recovery`](.claude/skills/cd-recovery/SKILL.md) | An old CD or DVD → its videos and photos copied off, damaged spots skipped instead of freezing the drive, videos converted to MP4 with a contact sheet and a damage report | "explore the CD in the drive", "rescue the videos on this CD", "the copy from D: is stuck" |
 
 ### family-shorts
@@ -129,6 +130,32 @@ uv run -q --no-project --with google-api-python-client --with google-auth-oauthl
 **Home Screen.** The page has its own icon. What to tell family:
 
 > If you want an icon on your Home Screen: open the link in Safari → Share → Add to Home Screen → Add.
+
+### channel-originals
+
+**Why it exists.** Some family videos are only on the channel, as long uploads from years ago; the tape
+or file they came from is gone. YouTube keeps only its own re-encode, often 320x240 for uploads from
+around 2010–2014, so the shorts are softer than the ones made from tapes. If the tape or a capture
+still exists, use `family-shorts` on it instead.
+
+**How a session goes.**
+
+1. **Ask:** say e.g. *"make shorts from the old video <title> on the channel"*.
+2. **Find and download:** Claude lists the channel's long videos, matches the title and downloads the
+   best copy to `$ARCHIVE/YouTube/<video id>.mkv`. That copy stays in the archive.
+3. **Shorts:** the same steps as `family-shorts`: scan, storyboard for you to review, enhance, render.
+   The MP4s and `manifest.json` go to `$SHORTS/yt_<label>/`.
+4. **Upload and playlists:** on your word, unlisted, with one unlisted playlist per old video. Then
+   refresh the family catalog.
+
+The old long videos are never changed or deleted.
+
+**Scripts** (in `.claude/skills/channel-originals/scripts/`):
+
+| Script | Job |
+|---|---|
+| `list_long.py` | The channel's videos longer than a Short: id, date, length, privacy, original file name, title |
+| `fetch.sh <id> <label> <year>` | Download one video into the archive and set up `work/yt_<label>/` for the family-shorts scripts |
 
 ### cd-recovery
 
