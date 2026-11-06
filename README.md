@@ -43,7 +43,8 @@ Claude picks the matching skill.
 3. **Storyboard:** Claude proposes a storyboard: the shorts, their shots with timecodes, and the
    captions. Adjust anything here; this is the cheap moment to change your mind.
 4. **Make:** Claude enhances the shots, builds and checks the HyperFrames projects, and renders them.
-   The MP4s and a `manifest.json` appear in the tape's Shorts folder.
+   The MP4s and a `manifest.json` appear in the tape's Shorts folder. Recorded music (a DJ, a radio)
+   is muted, so YouTube doesn't put a copyright claim on the shorts.
 5. **Review:** watch them there.
 6. **Upload:** say *"upload shorts 09–11"* (unlisted unless you name private or public). Nothing is uploaded
    without this. You get the links back.
@@ -79,7 +80,8 @@ first and reads its `plan/tape.json`):
 | `make_short.py` | Build a HyperFrames project from `plan/shortNN.tsv` + `plan/copy.json` |
 | `render_all.sh` | Render one by one and copy to the Shorts folder |
 | `manifest.py` | Add rendered shorts to the folder's `manifest.json` |
-| `upload.sh` / `yt_family.py` | Upload to YouTube, change privacy |
+| `music_check.py` | Find recorded music in a short and mute it before upload |
+| `upload.sh` / `yt_family.py` | Upload to YouTube, change privacy, replace a claimed short |
 | `compare_pair.sh` | Compare a tape's "PAL" and "NTSC" copies |
 
 `tools/yt_family.py` and `tools/compare_pair.sh` are links to the skill's copies. `work/001/scripts/`

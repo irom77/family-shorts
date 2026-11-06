@@ -62,14 +62,14 @@ manifest). Differences for these sources:
 
 - **Branding:** uploads from old web editors start and end with the editor's logo (a few seconds
   each). Keep shots out of them; the scan sheets show where they are.
-- **Soundtrack:** old web-editor montages often replaced or mixed the camera sound with stock music
-  (look for a "Music provided by …" credit; check with a quick local Whisper transcription of a few
-  slices: speech means camera sound, lyrics or nothing means music. Run `faster-whisper` under
-  `uv run --with faster-whisper` and pass it a numpy array read from a 16 kHz WAV: its own decoder
-  fails with the current PyAV). Keep music out of the shorts.
-  If YouTube shows a Content ID claim on the old video, or the whole track is music, mute it: build
-  `source_muted.mkv` (video copied, `anullsrc` audio), point `tape.json` at it, and say "without
-  sound" in the description.
+- **Soundtrack:** old web-editor montages often replaced the camera sound with stock music or mixed
+  a music bed under it (look for a "Music provided by …" credit). Speech in a Whisper transcript does
+  not prove there's no music under it, so run `family-shorts`' `music_check.py` on the source or the
+  rendered shorts. Mute the music as that skill describes. If YouTube shows a Content ID claim on the
+  old video, or the whole track is music, build `source_muted.mkv` (video copied, `anullsrc` audio),
+  point `tape.json` at it, and say "without sound" in the description. (For Whisper itself: run
+  `faster-whisper` under `uv run --with faster-whisper` and pass it a numpy array read from a 16 kHz
+  WAV; its own decoder fails with the current PyAV.)
 - **Enhancement:** `enhance.sh` recognises a 320x240 source, and a 568x320 (16:9 phone) one, which
   it places as a full-width band at y=656..1264. For both it uses a light deblock and denoise. The
   DV-strength denoise turns faces waxy at this size. Compare one enhanced still with a plain upscale

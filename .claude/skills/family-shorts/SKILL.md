@@ -20,6 +20,10 @@ upload are scripts in `scripts/`; `<skill>` below means this skill's folder
 - **No names.** Never name people or places in captions, titles or descriptions.
 - **Audio and length:** original camcorder audio, cleaned and loudness-normalised, no music. Target
   45–90 s; hard limits 30–180 s.
+- **No recorded music on YouTube.** Music playing in the room (a DJ, a radio, a record at a party) is
+  still somebody's recording: Content ID claims the short.
+  Every short passes `scripts/music_check.py` before upload; music gets muted. Live singing by
+  people on the tape is fine.
 - **No reuse:** a scene goes into at most one short. The ledger is `plan/shortNN.tsv`, and earlier
   shorts' TSVs are the record of what's taken.
 - **Review before upload:** show the user the storyboard (shot list plus captions) before enhancing.
@@ -152,7 +156,23 @@ Check each MP4:
 - 1080x1920 h264 + aac;
 - `ffmpeg -v error -i f -f null -` prints nothing;
 - loudness about -16 LUFS;
-- a 5-frame contact sheet looks right.
+- a 5-frame contact sheet looks right;
+- no recorded music (below).
+
+**Music check**, all of a batch at once (CPU, a few seconds per short; the 4 MB model downloads once):
+
+```bash
+cd /tmp && uv run -q --no-project --python 3.12 --with mediapipe python <skill>/scripts/music_check.py "$OUT"/*.mp4
+```
+
+It prints a per-second map (`#` music likely, `+` possible) and the music ranges. For every short with
+music, listen or read a Whisper transcript of those seconds: lyrics of a known song, a DJ set or a
+radio are recorded music; children or adults singing on the tape are not (YAMNet flags singing too).
+Mute recorded music: keep the original as `work/<tape>/with_music/<file>`, then
+`music_check.py <original> --mute "$OUT/<file>"` writes the short with those seconds silenced (the
+whole track when music fills over 60% of it). Add "bez dźwięku (muzyka w tle wycięta ze względu na
+prawa autorskie)" / "without sound (background music removed for copyright)" to the manifest
+description. A rebuild with `render_all.sh` brings the music back, so mute again after any re-render.
 
 **Done when:** every MP4 passes these checks and is listed in the manifest.
 
@@ -175,6 +195,12 @@ nohup setsid <skill>/scripts/upload.sh work/<tape> unlisted 09 10 > work/<tape>/
   `yt_family.py playlist --manifest … --title "…" --description "…" --expect-channel "$CHANNEL"`
   creates the playlist once, records it in the manifest and adds any uploaded short not yet in it,
   in manifest order. Rerun it after later uploads. No names of people or places in the title.
+- **Copyright claim on an uploaded short:** mute it as in the music check, then
+  `REPLACE=1 upload.sh work/<tape> unlisted NN` uploads the fixed copy, makes the old video private
+  (it keeps the old record under `replaced` in the manifest) and counts against the channel cap.
+  Then rerun `yt_family.py playlist` with the same title: it removes the old video from the playlist
+  and puts the new one in its place. Deleting the old video is the user's call. For a single claimed
+  song the user can also use YouTube Studio's "Erase song", which keeps the link and views.
 - **Change privacy later:** `yt_family.py privacy --manifest … --short short_NN --privacy unlisted --expect-channel "$CHANNEL"`.
 - **Sign-in:** the OAuth app is in testing mode, so the token lasts about 7 days. On an auth error the
   user re-signs in with:

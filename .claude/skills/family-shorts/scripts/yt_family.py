@@ -7,6 +7,7 @@ so the FPV channel and the family channel can never be mixed up.
   yt_family.py auth  [--client client_secret.json | --from-token other_token.json]
   yt_family.py channel
   yt_family.py upload --manifest manifest.json --short short_01 --privacy private --expect-channel @handle
+  yt_family.py upload … --replace   # new copy of a fixed short; the old video goes private
   yt_family.py playlist --manifest manifest.json --title "…" --privacy unlisted --expect-channel @handle
 """
 import argparse
@@ -80,8 +81,10 @@ def cmd_upload(a):
     file = Path(a.file) if a.file else mpath.parent / s["file"]
     if not file.exists():
         sys.exit(f"clip not found: {file}")
-    if s.get("youtube") and not a.again:
-        sys.exit(f"already uploaded as {s['youtube']['url']} (pass --again for a second copy)")
+    if s.get("youtube") and not (a.again or a.replace):
+        sys.exit(f"already uploaded as {s['youtube']['url']} (pass --replace to swap in a fixed copy)")
+    if a.replace and not s.get("youtube"):
+        sys.exit(f"{a.short} has no upload to replace")
 
     yt = youtube()
     chans = channels(yt)
@@ -101,9 +104,22 @@ def cmd_upload(a):
             print(f"uploaded {status.progress():.0%}", flush=True)
     url = f"https://youtube.com/shorts/{resp['id']}"
     print("VIDEO", resp["id"], url, resp["status"]["privacyStatus"])
+    old = s.get("youtube") if a.replace else None
     s["youtube"] = {"id": resp["id"], "url": url, "privacy": resp["status"]["privacyStatus"],
                     "channel": chans[0], "uploaded_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    if old:
+        # Keep the old record: `playlist` swaps the new video into its place.
+        s.setdefault("replaced", []).append(old)
     mpath.write_text(json.dumps(man, ensure_ascii=False, indent=2) + "\n")
+    if old:
+        # Private, not deleted: deleting is the user's call.
+        st = yt.videos().list(part="status", id=old["id"]).execute()["items"][0]["status"]
+        st["privacyStatus"] = "private"
+        st.pop("publishAt", None)
+        yt.videos().update(part="status", body={"id": old["id"], "status": st}).execute()
+        old["privacy"] = "private"
+        mpath.write_text(json.dumps(man, ensure_ascii=False, indent=2) + "\n")
+        print("REPLACED", old["id"], "-> private")
 
 
 def cmd_privacy(a):
@@ -161,19 +177,23 @@ def cmd_playlist(a):
         pl = man["playlist"] = {"id": resp["id"], "url": f"https://www.youtube.com/playlist?list={resp['id']}",
                                 "title": a.title, "privacy": a.privacy}
         mpath.write_text(json.dumps(man, ensure_ascii=False, indent=2) + "\n")
-    have, page = set(), None
+    gone = {r["id"] for s in man["shorts"] for r in s.get("replaced", [])}
+    have, page = {}, None
     while True:
         # A just-created playlist can 404 for a few seconds.
         r = retry(lambda: yt.playlistItems().list(part="contentDetails", playlistId=pl["id"],
                                                   maxResults=50, pageToken=page).execute())
-        have |= {i["contentDetails"]["videoId"] for i in r.get("items", [])}
+        have |= {i["contentDetails"]["videoId"]: i["id"] for i in r.get("items", [])}
         page = r.get("nextPageToken")
         if not page:
             break
-    for v in vids:  # manifest order = short order
+    for v in gone & have.keys():  # replaced uploads leave the playlist
+        yt.playlistItems().delete(id=have.pop(v)).execute()
+    for pos, v in enumerate(vids):  # manifest order = short order
         if v not in have:
             yt.playlistItems().insert(part="snippet", body={"snippet": {
-                "playlistId": pl["id"], "resourceId": {"kind": "youtube#video", "videoId": v}}}).execute()
+                "playlistId": pl["id"], "position": pos,
+                "resourceId": {"kind": "youtube#video", "videoId": v}}}).execute()
     print("PLAYLIST", pl["id"], pl["url"], f"{len(vids)} videos")
 
 
@@ -191,7 +211,8 @@ def main():
     p.add_argument("--privacy", required=True, choices=["private", "unlisted", "public"])
     p.add_argument("--expect-channel", required=True, help="channel id, title or @handle")
     p.add_argument("--file", help="default: manifest folder / short's file")
-    p.add_argument("--again", action="store_true")
+    p.add_argument("--again", action="store_true", help="a second copy, keeping the first")
+    p.add_argument("--replace", action="store_true", help="a fixed copy; the old video goes private")
     p = sub.add_parser("privacy", help="change the privacy of an uploaded short")
     p.add_argument("--manifest", required=True)
     p.add_argument("--short", required=True)
