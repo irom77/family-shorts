@@ -2,7 +2,8 @@
 # Enhance one DV segment into a 1080x1920 blur-fill vertical clip.
 # usage: enhance.sh <source.avi> <start_sec> <dur_sec> <out.mp4>
 # Handles NTSC DV (720x480, SAR 8:9), PAL DV (720x576, SAR 16:15) and Video CD (352x288 progressive
-# MPEG-1, 4:3 whatever its SAR flag says) and old 320x240 YouTube downloads; all come out at 30 fps.
+# MPEG-1, 4:3 whatever its SAR flag says) and old YouTube downloads (320x240, or 568x320 from a phone);
+# all come out at 30 fps. 4:3 sources fill y=520..1320; a 16:9 one fills y=656..1264.
 set -euo pipefail
 SRC="$1"; SS="$2"; DUR="$3"; OUT="$4"
 TMP="$(dirname "$OUT")/.$(basename "$OUT" .mp4)"
@@ -11,7 +12,13 @@ TRF="$TMP/transforms.trf"
 H=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$SRC")
 
 # Common front: deinterlace, crop overscan + head-switching noise, square pixels.
-if [ "$H" = 240 ]; then
+FGH=800; FGY=520
+if [ "$H" = 320 ]; then
+  # Old 16:9 phone clip from YouTube (channel-originals): progressive, compressed; light cleanup only.
+  PRE="crop=564:316:2:2,deblock=filter=weak:block=8,setsar=1"
+  DN="hqdn3d=1.5:1.5:3:3"
+  FGH=608; FGY=656
+elif [ "$H" = 240 ]; then
   # Old 240p YouTube upload (channel-originals): progressive and heavily compressed; trim edge junk
   # and deblock lightly. Already smoothed by the old encoder, so the denoise is lighter too (the DV
   # strength turns faces waxy).
@@ -36,11 +43,11 @@ ffmpeg -nostdin -hide_banner -nostats -loglevel error -y -ss "$SS" -t "$DUR" -i 
 ffmpeg -nostdin -hide_banner -nostats -loglevel error -y -ss "$SS" -t "$DUR" -i "$SRC" -filter_complex "\
 [0:v]$PRE,vidstabtransform=input=$TRF:smoothing=18:optzoom=1:interpol=bicubic,\
 $DN,\
-scale=1080:800:flags=lanczos,unsharp=5:5:0.7:3:3:0.0,\
+scale=1080:$FGH:flags=lanczos,unsharp=5:5:0.7:3:3:0.0,\
 eq=contrast=1.05:saturation=1.12:gamma=1.02,fps=30,format=yuv420p,split[fg][b];\
 [b]scale=270:480:force_original_aspect_ratio=increase,crop=270:480,gblur=sigma=10,\
 scale=1080:1920:flags=bicubic,eq=brightness=-0.10:saturation=0.85[bg];\
-[bg][fg]overlay=x=0:y=520,format=yuv420p[v];\
+[bg][fg]overlay=x=0:y=$FGY,format=yuv420p[v];\
 [0:a]highpass=f=80,lowpass=f=12000,afftdn=nf=-28,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000[a]" \
   -map "[v]" -map "[a]" -c:v libx264 -preset medium -crf 16 -profile:v high -movflags +faststart \
   -c:a aac -b:a 192k "$OUT"

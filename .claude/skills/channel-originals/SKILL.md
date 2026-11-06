@@ -32,7 +32,8 @@ uv run -q --no-project --with google-api-python-client --with google-auth-oauthl
 
 One line per non-Short video, oldest first: id, upload date, length, privacy, the file name it was
 uploaded from, title. Match the user's titles to ids. The file name hints at what the source was
-(`.flv` from an old web editor, `.MOV` from a phone).
+(`.flv` from an old web editor, `.MOV` from a phone). It hides videos of 3 minutes or less (they
+could be Shorts); a title the user names that isn't listed may be one: rerun with `--min-seconds 0`.
 
 ## 2. Download and set up
 
@@ -46,8 +47,13 @@ uploaded from, title. Match the user's titles to ids. The file name hints at wha
   local label (it can name the occasion; `work/` is not in git).
 - The year goes into the end card. Fix it, and the dates in the copy, from the camera's date stamp
   once the scan shows it.
-- A private video doesn't download without signing in. Ask the user to make it unlisted for the
-  download, or to download it from YouTube Studio themselves.
+- A private video doesn't download without signing in. Ask the user to download it from YouTube
+  Studio (or make it unlisted for a moment). Copy their file to `$ARCHIVE/YouTube/<video-id>_studio.mp4`
+  and write `tape.json` by hand like `fetch.sh` does.
+- **Several uploads, one occasion** (bouts of a match, a second shorter cut of a trip): fetch each,
+  then join them into `work/yt_<slug>/source.mkv` with ffmpeg's concat filter (x264 CRF 12, FLAC
+  audio; the parts can differ in audio codec), point `source` there and list every id in
+  `youtube_source`. Drop an upload that only repeats another.
 
 ## 3. Make the shorts
 
@@ -56,7 +62,16 @@ manifest). Differences for these sources:
 
 - **Branding:** uploads from old web editors start and end with the editor's logo (a few seconds
   each). Keep shots out of them; the scan sheets show where they are.
-- **Enhancement:** `enhance.sh` recognises a 320x240 source and uses a light deblock and denoise. The
+- **Soundtrack:** old web-editor montages often replaced or mixed the camera sound with stock music
+  (look for a "Music provided by …" credit; check with a quick local Whisper transcription of a few
+  slices: speech means camera sound, lyrics or nothing means music. Run `faster-whisper` under
+  `uv run --with faster-whisper` and pass it a numpy array read from a 16 kHz WAV: its own decoder
+  fails with the current PyAV). Keep music out of the shorts.
+  If YouTube shows a Content ID claim on the old video, or the whole track is music, mute it: build
+  `source_muted.mkv` (video copied, `anullsrc` audio), point `tape.json` at it, and say "without
+  sound" in the description.
+- **Enhancement:** `enhance.sh` recognises a 320x240 source, and a 568x320 (16:9 phone) one, which
+  it places as a full-width band at y=656..1264. For both it uses a light deblock and denoise. The
   DV-strength denoise turns faces waxy at this size. Compare one enhanced still with a plain upscale
   of the same frame before the batch: blotches or smears that are in both come from the old upload.
 - **Fewer, tighter shorts:** a 10-minute upload gives about 4–5 shorts without reusing a scene.
